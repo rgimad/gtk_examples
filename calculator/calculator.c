@@ -41,6 +41,10 @@ static void click_dot(GtkWidget *widget, gpointer data) {
     //
 }
 
+static void click_bksp(GtkWidget *widget, gpointer data) {
+    //
+}
+
 static void click_sgn(GtkWidget *widget, gpointer data) {
     //
 }
@@ -96,6 +100,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
     GtkWidget *btn_ce;
     GtkWidget *btn_sqrt;
     GtkWidget *btn_sqr;
+    GtkWidget *btn_bksp;
     GtkWidget *btn_equal;
 
     window = gtk_application_window_new(app);
@@ -111,7 +116,11 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_label_set_markup (GTK_LABEL (display), markup);
     g_free (markup);
     gtk_label_set_xalign(GTK_LABEL(display), 0.9);
-    gtk_grid_attach (GTK_GRID (grid), display, 0, 0, 6, 1);
+    gtk_grid_attach (GTK_GRID (grid), display, 0, 0, 5, 1);
+
+    btn_bksp = gtk_button_new_with_label("Bksp");
+    add_button(grid, btn_bksp, 5, 0, 1, 1);
+    g_signal_connect(btn_bksp, "clicked", G_CALLBACK(click_bksp), NULL);
 
     for (int i = 1; i <= 9; i++) {
         btn_digit[i] = gtk_button_new_with_label((char[]){'0' + i, '\0'});
