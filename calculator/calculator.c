@@ -1,8 +1,12 @@
+#include <stdio.h>
+#include <string.h>
 #include <gtk/gtk.h>
 
 enum state_e {
-    S_START,
-    S_WAIT_NUM2
+    S_ENTER_1, // state before entering number1
+    S_EDIT_1, // number1 editing state
+    S_ENTER_2, // state before entering number2
+    S_EDIT_2 // number2 editing state
 };
 
 enum binop_e {
@@ -14,27 +18,65 @@ enum binop_e {
 };
 
 struct calc_ctx_s {
+    char display_text[32];
     double number1;
     double number2;
     int binop;
     int state;
 };
 
+struct calc_ctx_s calc_ctx;
+GtkWidget *window;
+GtkWidget *display;
+GtkWidget *grid;
+GtkWidget *btn_digit[10];
+GtkWidget *btn_dot;
+GtkWidget *btn_sgn;
+GtkWidget *btn_add;
+GtkWidget *btn_sub;
+GtkWidget *btn_mul;
+GtkWidget *btn_div;
+GtkWidget *btn_c;
+GtkWidget *btn_ce;
+GtkWidget *btn_sqrt;
+GtkWidget *btn_sqr;
+GtkWidget *btn_bksp;
+GtkWidget *btn_equal;
+
 void init_calc_ctx(struct calc_ctx_s *ctx) {
+    strcpy(ctx->display_text, "0");
     ctx->number1 = 0.0;
     ctx->number2 = 0.0;
     ctx->binop = OP_NONE;
-    ctx->state = S_START;
+    ctx->state = S_ENTER_1;
 }
 
 static void add_button(GtkWidget *grid, GtkWidget *btn, int x, int y, int w, int h) {
-    gtk_widget_set_hexpand(btn, TRUE);
-    gtk_widget_set_vexpand(btn, TRUE);
+    gtk_widget_set_hexpand(btn, TRUE); // enable horizontal auto-expand
+    gtk_widget_set_vexpand(btn, TRUE); // enable vertical auto-expand
     gtk_grid_attach(GTK_GRID(grid), btn, x, y, w, h);
 }
 
+static void display_set_style(GtkWidget *disp, char *init_text) {
+    char *markup = g_markup_printf_escaped("<span size=\"28000\">\%s</span>", init_text); // pango markup (https://developer.gnome.org/pygtk/stable/pango-markup-language.html)
+    gtk_label_set_markup(GTK_LABEL (disp), markup);
+    g_free(markup);
+    gtk_label_set_xalign(GTK_LABEL(disp), 0.9);
+}
+
+static void update_display() {
+    display_set_style(display, calc_ctx.display_text);
+}
+
+// TODO: get rid of leading zeroes automatically
 static void click_digit(GtkWidget *widget, gpointer data) {
-    printf("Clicked button %u\n", GPOINTER_TO_UINT(data));
+    int st = calc_ctx.state;
+    if (st == S_ENTER_1 || st == S_ENTER_2) {
+        calc_ctx.state = (st == S_ENTER_1 ? S_EDIT_1 : S_EDIT_2);
+    }
+    strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
+    update_display();
+    // printf("Clicked button %u\n", GPOINTER_TO_UINT(data));
 }
 
 static void click_dot(GtkWidget *widget, gpointer data) {
@@ -86,22 +128,7 @@ static void click_equal(GtkWidget *widget, gpointer data) {
 }
 
 static void activate(GtkApplication *app, gpointer user_data) {
-    GtkWidget *window;
-    GtkWidget *grid;
-    GtkWidget *display;
-    GtkWidget *btn_digit[10];
-    GtkWidget *btn_dot;
-    GtkWidget *btn_sgn;
-    GtkWidget *btn_add;
-    GtkWidget *btn_sub;
-    GtkWidget *btn_mul;
-    GtkWidget *btn_div;
-    GtkWidget *btn_c;
-    GtkWidget *btn_ce;
-    GtkWidget *btn_sqrt;
-    GtkWidget *btn_sqr;
-    GtkWidget *btn_bksp;
-    GtkWidget *btn_equal;
+    init_calc_ctx(&calc_ctx);
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW (window), "Calculator");
@@ -112,11 +139,8 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_container_add (GTK_CONTAINER (window), grid);
 
     display = gtk_label_new (NULL); // NULL means create without text 
-    char *markup = g_markup_printf_escaped ("<span size=\"28000\">\%s</span>", "0"); // pango markup (https://developer.gnome.org/pygtk/stable/pango-markup-language.html)
-    gtk_label_set_markup (GTK_LABEL (display), markup);
-    g_free (markup);
-    gtk_label_set_xalign(GTK_LABEL(display), 0.9);
-    gtk_grid_attach (GTK_GRID (grid), display, 0, 0, 5, 1);
+    display_set_style(display, calc_ctx.display_text);
+    gtk_grid_attach (GTK_GRID (grid), display, 0, 0, 5, 1); // 0/0 - x/y coord (in cells), 5/1 - w/h (in cells)
 
     btn_bksp = gtk_button_new_with_label("Bksp");
     add_button(grid, btn_bksp, 5, 0, 1, 1);
