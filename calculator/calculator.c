@@ -68,11 +68,13 @@ static void update_display() {
     display_set_style(display, calc_ctx.display_text);
 }
 
-// TODO: get rid of leading zeroes automatically
 static void click_digit(GtkWidget *widget, gpointer data) {
     int st = calc_ctx.state;
     if (st == S_ENTER_1 || st == S_ENTER_2) {
         calc_ctx.state = (st == S_ENTER_1 ? S_EDIT_1 : S_EDIT_2);
+    }
+    if (strcmp(calc_ctx.display_text, "0") == 0) {
+        strcpy(calc_ctx.display_text, "");
     }
     strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
     update_display();
@@ -132,7 +134,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW (window), "Calculator");
-    gtk_window_set_default_size(GTK_WINDOW(window), 350, 400);
+    gtk_window_set_default_size(GTK_WINDOW(window), 350, 300);
     gtk_container_set_border_width (GTK_CONTAINER (window), 10);
 
     grid = gtk_grid_new(); // grid for packing components
