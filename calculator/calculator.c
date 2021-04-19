@@ -78,7 +78,6 @@ static void click_digit(GtkWidget *widget, gpointer data) {
     }
     strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
     update_display();
-    // printf("Clicked button %u\n", GPOINTER_TO_UINT(data));
 }
 
 static void click_dot(GtkWidget *widget, gpointer data) {
@@ -86,7 +85,15 @@ static void click_dot(GtkWidget *widget, gpointer data) {
 }
 
 static void click_bksp(GtkWidget *widget, gpointer data) {
-    //
+    int st = calc_ctx.state;
+    if (st == S_EDIT_1 || st == S_EDIT_2) {
+        if (strlen(calc_ctx.display_text) == 1) {
+            strcpy(calc_ctx.display_text, "0");
+        } else {
+            calc_ctx.display_text[strlen(calc_ctx.display_text) - 1] = '\0';
+        }
+        update_display();
+    }
 }
 
 static void click_sgn(GtkWidget *widget, gpointer data) {
