@@ -70,7 +70,6 @@ static void display_set_style(GtkWidget *disp, char *init_text) {
 }
 
 static void update_display() {
-    //printf(" = %d\n", strlen(calc_ctx.display_text) - 1);
     display_set_style(display, calc_ctx.display_text);
 }
 
@@ -85,8 +84,6 @@ static void click_digit(GtkWidget *widget, gpointer data) {
     }
     if (strlen(calc_ctx.display_text) < MAX_DIGITS) {
         strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
-        //assert(strlen(calc_ctx.display_text) - 1 < 31);
-        //printf("%d\n", strlen(calc_ctx.display_text) - 1);
     }
     update_display();
 }
@@ -156,23 +153,6 @@ static void click_binop(GtkWidget *widget, gpointer data) {
     calc_ctx.state = S_ENTER_2;
     calc_ctx.binop = GPOINTER_TO_INT(data);
 }
-
-/*static void click_add(GtkWidget *widget, gpointer data) {
-    
-}
-
-static void click_sub(GtkWidget *widget, gpointer data) {
-    //
-}
-
-static void click_mul(GtkWidget *widget, gpointer data) {
-    //
-}
-
-static void click_div(GtkWidget *widget, gpointer data) {
-    //
-}
-*/
 
 // clear all
 static void click_c(GtkWidget *widget, gpointer data) {
