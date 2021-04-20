@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 #include <gtk/gtk.h>
+
+#define MAX_DIGITS 30
 
 enum state_e {
     S_ENTER_1, // state before entering number1
@@ -18,7 +21,7 @@ enum binop_e {
 };
 
 struct calc_ctx_s {
-    char display_text[32];
+    char display_text[MAX_DIGITS + 1];
     double number1;
     double number2;
     int binop;
@@ -65,6 +68,7 @@ static void display_set_style(GtkWidget *disp, char *init_text) {
 }
 
 static void update_display() {
+    //printf(" = %d\n", strlen(calc_ctx.display_text) - 1);
     display_set_style(display, calc_ctx.display_text);
 }
 
@@ -76,12 +80,19 @@ static void click_digit(GtkWidget *widget, gpointer data) {
     if (strcmp(calc_ctx.display_text, "0") == 0) {
         strcpy(calc_ctx.display_text, "");
     }
-    strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
-    update_display();
+    if (strlen(calc_ctx.display_text) < MAX_DIGITS) {
+        strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
+        //assert(strlen(calc_ctx.display_text) - 1 < 31);
+        //printf("%d\n", strlen(calc_ctx.display_text) - 1);
+        update_display();
+    }
 }
 
 static void click_dot(GtkWidget *widget, gpointer data) {
-    //
+    if (strchr(calc_ctx.display_text, '.') == NULL && strlen(calc_ctx.display_text) < MAX_DIGITS) {
+        strcat(calc_ctx.display_text, ".");
+        update_display();
+    }
 }
 
 static void click_bksp(GtkWidget *widget, gpointer data) {
@@ -102,7 +113,7 @@ static void click_sgn(GtkWidget *widget, gpointer data) {
         if (calc_ctx.display_text[0] == '-') { // if already minus, delete it
             memmove(calc_ctx.display_text, calc_ctx.display_text + 1, strlen(calc_ctx.display_text));
         } else { // if not, add minus
-            if (strlen(calc_ctx.display_text) < 32) { // check length
+            if (strlen(calc_ctx.display_text) < MAX_DIGITS) { // check length
                 sprintf(tmp, "%c%s", '-', calc_ctx.display_text);
                 strcpy(calc_ctx.display_text, tmp);
             }
@@ -127,10 +138,12 @@ static void click_div(GtkWidget *widget, gpointer data) {
     //
 }
 
+// clear all
 static void click_c(GtkWidget *widget, gpointer data) {
     //
 }
 
+// clear the most recent entry
 static void click_ce(GtkWidget *widget, gpointer data) {
     //
 }
