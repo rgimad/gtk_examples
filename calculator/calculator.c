@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
+#include <locale.h>
 #include <gtk/gtk.h>
 
 #define MAX_DIGITS 30
@@ -75,6 +77,7 @@ static void update_display() {
 static void click_digit(GtkWidget *widget, gpointer data) {
     int st = calc_ctx.state;
     if (st == S_ENTER_1 || st == S_ENTER_2) {
+        strcpy(calc_ctx.display_text, "");
         calc_ctx.state = (st == S_ENTER_1 ? S_EDIT_1 : S_EDIT_2);
     }
     if (strcmp(calc_ctx.display_text, "0") == 0) {
@@ -84,11 +87,16 @@ static void click_digit(GtkWidget *widget, gpointer data) {
         strcat(calc_ctx.display_text, (char[]){'0' + GPOINTER_TO_UINT(data), '\0'});
         //assert(strlen(calc_ctx.display_text) - 1 < 31);
         //printf("%d\n", strlen(calc_ctx.display_text) - 1);
-        update_display();
     }
+    update_display();
 }
 
 static void click_dot(GtkWidget *widget, gpointer data) {
+    int st = calc_ctx.state;
+    if (st == S_ENTER_1 || st == S_ENTER_2) {
+        strcpy(calc_ctx.display_text, "0");
+        calc_ctx.state = (st == S_ENTER_1 ? S_EDIT_1 : S_EDIT_2);
+    }
     if (strchr(calc_ctx.display_text, '.') == NULL && strlen(calc_ctx.display_text) < MAX_DIGITS) {
         strcat(calc_ctx.display_text, ".");
         update_display();
@@ -122,8 +130,35 @@ static void click_sgn(GtkWidget *widget, gpointer data) {
     }
 }
 
-static void click_add(GtkWidget *widget, gpointer data) {
-    //
+static double read_number() {
+    double num;
+    sscanf(calc_ctx.display_text, "%lf", &num);
+    //printf("num = %f\n", num);
+    return num;
+}
+
+static void print_to_string(char *str, double num) {
+    if (num == (int)num) {
+        sprintf(str, "%d", (int)num);
+    } else {
+        sprintf(str, "%f", num);
+        // strip trailing zeroes:
+        int i = strlen(str) - 1;
+        while (i > 0 && str[i] == '0') {
+            str[i--] = '\0';
+        }
+    }
+}
+
+static void click_binop(GtkWidget *widget, gpointer data) {
+    calc_ctx.number1 = read_number();
+    //calc_ctx.number2 = calc_ctx.number1;
+    calc_ctx.state = S_ENTER_2;
+    calc_ctx.binop = GPOINTER_TO_INT(data);
+}
+
+/*static void click_add(GtkWidget *widget, gpointer data) {
+    
 }
 
 static void click_sub(GtkWidget *widget, gpointer data) {
@@ -137,6 +172,7 @@ static void click_mul(GtkWidget *widget, gpointer data) {
 static void click_div(GtkWidget *widget, gpointer data) {
     //
 }
+*/
 
 // clear all
 static void click_c(GtkWidget *widget, gpointer data) {
@@ -157,7 +193,27 @@ static void click_sqr(GtkWidget *widget, gpointer data) {
 }
 
 static void click_equal(GtkWidget *widget, gpointer data) {
-    //
+    calc_ctx.number2 = read_number();
+    //printf("number1 = %f\nnumber2 = %f\n\n", calc_ctx.number1, calc_ctx.number2);
+    switch (calc_ctx.binop) {
+        case OP_ADD:
+            calc_ctx.number1 += calc_ctx.number2;
+            break;
+        case OP_SUB:
+            calc_ctx.number1 -= calc_ctx.number2;
+            break;
+        case OP_MUL:
+            calc_ctx.number1 *= calc_ctx.number2;
+            break;
+        case OP_DIV:
+            calc_ctx.number1 /= calc_ctx.number2;
+            break;
+        default:
+            break;
+    }
+    calc_ctx.state = S_ENTER_1;
+    print_to_string(calc_ctx.display_text, calc_ctx.number1);
+    update_display();
 }
 
 static void activate(GtkApplication *app, gpointer user_data) {
@@ -198,19 +254,19 @@ static void activate(GtkApplication *app, gpointer user_data) {
 
     btn_div = gtk_button_new_with_label("/");
     add_button(grid, btn_div, 3, 1, 1, 1);
-    g_signal_connect(btn_div, "clicked", G_CALLBACK(click_div), NULL);
+    g_signal_connect(btn_div, "clicked", G_CALLBACK(click_binop), GINT_TO_POINTER(OP_DIV));
 
     btn_mul = gtk_button_new_with_label("*");
     add_button(grid, btn_mul, 3, 2, 1, 1);
-    g_signal_connect(btn_mul, "clicked", G_CALLBACK(click_mul), NULL);
+    g_signal_connect(btn_mul, "clicked", G_CALLBACK(click_binop), GINT_TO_POINTER(OP_MUL));
 
     btn_sub = gtk_button_new_with_label("-");
     add_button(grid, btn_sub, 3, 3, 1, 1);
-    g_signal_connect(btn_sub, "clicked", G_CALLBACK(click_sub), NULL);
+    g_signal_connect(btn_sub, "clicked", G_CALLBACK(click_binop), GINT_TO_POINTER(OP_SUB));
 
     btn_add = gtk_button_new_with_label("+");
     add_button(grid, btn_add, 3, 4, 1, 1);
-    g_signal_connect(btn_add, "clicked", G_CALLBACK(click_add), NULL);
+    g_signal_connect(btn_add, "clicked", G_CALLBACK(click_binop), GINT_TO_POINTER(OP_ADD));
 
     btn_c = gtk_button_new_with_label("C");
     add_button(grid, btn_c, 4, 1, 1, 1);
@@ -239,7 +295,11 @@ int main (int argc, char *argv[]) {
     GtkApplication *app;
     int status;
 
+    // prevent gtk from setting user locale instead of default C locale
+    // it's important for sscanf cause it cannot read real numbers with comma istead of dot
+    gtk_disable_setlocale(); 
     app = gtk_application_new ("org.gtk.example", G_APPLICATION_FLAGS_NONE);
+    
     g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
     status = g_application_run (G_APPLICATION (app), argc, argv);
     g_object_unref (app);
