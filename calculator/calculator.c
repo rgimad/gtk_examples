@@ -97,7 +97,18 @@ static void click_bksp(GtkWidget *widget, gpointer data) {
 }
 
 static void click_sgn(GtkWidget *widget, gpointer data) {
-    //
+    if (strcmp(calc_ctx.display_text, "0") != 0) { // if text is not just 0
+        char tmp[36];
+        if (calc_ctx.display_text[0] == '-') { // if already minus, delete it
+            memmove(calc_ctx.display_text, calc_ctx.display_text + 1, strlen(calc_ctx.display_text));
+        } else { // if not, add minus
+            if (strlen(calc_ctx.display_text) < 32) { // check length
+                sprintf(tmp, "%c%s", '-', calc_ctx.display_text);
+                strcpy(calc_ctx.display_text, tmp);
+            }
+        }
+        update_display();
+    }
 }
 
 static void click_add(GtkWidget *widget, gpointer data) {
