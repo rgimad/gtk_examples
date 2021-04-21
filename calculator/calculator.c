@@ -4,7 +4,7 @@
 #include <math.h>
 #include <locale.h>
 #include <gtk/gtk.h>
-
+#include <stdbool.h>
 #define MAX_DIGITS 30
 
 enum state_e {
@@ -24,6 +24,8 @@ enum binop_e {
 
 struct calc_ctx_s {
     char display_text[MAX_DIGITS + 1];
+    bool is_set1;
+    bool is_set2;
     double number1;
     double number2;
     int binop;
@@ -50,6 +52,8 @@ GtkWidget *btn_equal;
 
 void init_calc_ctx(struct calc_ctx_s *ctx) {
     strcpy(ctx->display_text, "0");
+    ctx->is_set1 = false;
+    ctx->is_set2 = false;
     ctx->number1 = 0.0;
     ctx->number2 = 0.0;
     ctx->binop = OP_NONE;
@@ -130,13 +134,15 @@ static void click_sgn(GtkWidget *widget, gpointer data) {
 static double read_number() {
     double num;
     sscanf(calc_ctx.display_text, "%lf", &num);
-    //printf("num = %f\n", num);
+    printf("num = %f\n", num);
     return num;
 }
 
+// print number to string
 static void print_to_string(char *str, double num) {
     if (num == (int)num) {
         sprintf(str, "%d", (int)num);
+        printf("%d %f %f\n", (int)num, num, sqrt(sqrt(2)));
     } else {
         sprintf(str, "%f", num);
         // strip trailing zeroes:
@@ -147,8 +153,10 @@ static void print_to_string(char *str, double num) {
     }
 }
 
+// + - * /
 static void click_binop(GtkWidget *widget, gpointer data) {
     calc_ctx.number1 = read_number();
+    calc_ctx.is_set1 = true;
     //calc_ctx.number2 = calc_ctx.number1;
     calc_ctx.state = S_ENTER_2;
     calc_ctx.binop = GPOINTER_TO_INT(data);
@@ -163,24 +171,38 @@ static void click_c(GtkWidget *widget, gpointer data) {
 // clear the most recent entry
 static void click_ce(GtkWidget *widget, gpointer data) {
     strcpy(calc_ctx.display_text, "0");
-    calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
+    // calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
+    int st = calc_ctx.state;
+    if (st == S_ENTER_1) {
+        calc_ctx.state = S_ENTER_1;
+        calc_ctx.is_set1 = false;
+    } else {
+        calc_ctx.state = S_ENTER_2;
+        calc_ctx.is_set2 = false;
+    }
     update_display();
 }
 
 static void click_sqrt(GtkWidget *widget, gpointer data) {
     int num = read_number();
     print_to_string(calc_ctx.display_text, sqrt(num));
+    calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
     update_display();
 }
 
 static void click_sqr(GtkWidget *widget, gpointer data) {
     int num = read_number();
     print_to_string(calc_ctx.display_text, num*num);
+    calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
     update_display();
 }
 
+// =
 static void click_equal(GtkWidget *widget, gpointer data) {
-    calc_ctx.number2 = read_number();
+    if (!calc_ctx.is_set2) {
+        calc_ctx.number2 = read_number();
+        calc_ctx.is_set2 = true;
+    }
     //printf("number1 = %f\nnumber2 = %f\n\n", calc_ctx.number1, calc_ctx.number2);
     switch (calc_ctx.binop) {
         case OP_ADD:
