@@ -156,20 +156,27 @@ static void click_binop(GtkWidget *widget, gpointer data) {
 
 // clear all
 static void click_c(GtkWidget *widget, gpointer data) {
-    //
+    init_calc_ctx(&calc_ctx);
+    update_display();
 }
 
 // clear the most recent entry
 static void click_ce(GtkWidget *widget, gpointer data) {
-    //
+    strcpy(calc_ctx.display_text, "0");
+    calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
+    update_display();
 }
 
 static void click_sqrt(GtkWidget *widget, gpointer data) {
-    //
+    int num = read_number();
+    print_to_string(calc_ctx.display_text, sqrt(num));
+    update_display();
 }
 
 static void click_sqr(GtkWidget *widget, gpointer data) {
-    //
+    int num = read_number();
+    print_to_string(calc_ctx.display_text, num*num);
+    update_display();
 }
 
 static void click_equal(GtkWidget *widget, gpointer data) {
