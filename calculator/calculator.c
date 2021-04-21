@@ -134,7 +134,6 @@ static void click_sgn(GtkWidget *widget, gpointer data) {
 static double read_number() {
     double num;
     sscanf(calc_ctx.display_text, "%lf", &num);
-    printf("num = %f\n", num);
     return num;
 }
 
@@ -142,7 +141,6 @@ static double read_number() {
 static void print_to_string(char *str, double num) {
     if (num == (int)num) {
         sprintf(str, "%d", (int)num);
-        printf("%d %f %f\n", (int)num, num, sqrt(sqrt(2)));
     } else {
         sprintf(str, "%f", num);
         // strip trailing zeroes:
@@ -184,14 +182,14 @@ static void click_ce(GtkWidget *widget, gpointer data) {
 }
 
 static void click_sqrt(GtkWidget *widget, gpointer data) {
-    int num = read_number();
+    double num = read_number();
     print_to_string(calc_ctx.display_text, sqrt(num));
     calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
     update_display();
 }
 
 static void click_sqr(GtkWidget *widget, gpointer data) {
-    int num = read_number();
+    double num = read_number();
     print_to_string(calc_ctx.display_text, num*num);
     calc_ctx.state = (calc_ctx.state == S_EDIT_1 ? S_ENTER_1 : S_ENTER_2);
     update_display();
