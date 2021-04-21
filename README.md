@@ -11,6 +11,6 @@ If you don't have GTK3, install it using the following command:
 - **simple_adder**\
     contains two edit boxes for numbers, and button to add them and get the result
 - **calculator** \
-    a basic arithmetic calculator
+    a basic arithmetic calculator \
     ![screenshot](https://github.com/rgimad/gtk_examples/blob/main/calculator/calc_screen.png "Screenshot")
 
