@@ -10,5 +10,7 @@ If you don't have GTK3, install it using the following command:
     shows a window with a button, by clicking on which Hello world text will be written to console
 - **simple_adder**\
     contains two edit boxes for numbers, and button to add them and get the result
-- **calculator** (in progress)\
+- **calculator** \
     a basic arithmetic calculator
+    ![screenshot](https://github.com/rgimad/gtk_examples/blob/main/calculator/calc_screen.png "Screenshot")
+
